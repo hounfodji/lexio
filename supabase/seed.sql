@@ -1,0 +1,5 @@
+-- =========================================================
+-- Lexio — Données de démonstration (optionnel)
+-- Rempli en Phase 6. Pour seeder, créez d'abord un utilisateur
+-- via Supabase Auth puis insérez ses mots ici.
+-- =========================================================
