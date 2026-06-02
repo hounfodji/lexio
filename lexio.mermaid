@@ -1,0 +1,53 @@
+erDiagram
+    PROFILES ||--o{ USER_INTERESTS : "a"
+    PROFILES ||--o{ VOCABULARY : "possede"
+    PROFILES ||--o{ STORY_HISTORY : "genere"
+    PROFILES ||--o{ QUIZ_ATTEMPTS : "passe"
+    VOCABULARY ||--o{ QUIZ_ATTEMPTS : "testee_dans"
+
+    PROFILES {
+        uuid id PK "= auth.users.id"
+        text email
+        timestamptz created_at
+    }
+    USER_INTERESTS {
+        uuid id PK
+        uuid user_id FK
+        text interest
+        timestamptz created_at
+    }
+    VOCABULARY {
+        uuid id PK
+        uuid user_id FK
+        text word "UNIQUE par user"
+        text english_definition
+        text french_translation
+        text french_definition
+        text pronunciation "IPA"
+        text example_sentence
+        text_array synonyms
+        cefr_level cefr_level "A1..C2"
+        int mastery_score "0-100"
+        int review_count
+        int interval_index "ajout"
+        word_status status "new/learning/mastered"
+        date next_review_date
+        timestamptz created_at
+    }
+    QUIZ_ATTEMPTS {
+        uuid id PK
+        uuid user_id FK
+        uuid vocabulary_id FK
+        quiz_type quiz_type
+        boolean is_correct
+        timestamptz created_at
+    }
+    STORY_HISTORY {
+        uuid id PK
+        uuid user_id FK
+        text title
+        text content
+        text_array words_used
+        text_array interests_used
+        timestamptz created_at
+    }
