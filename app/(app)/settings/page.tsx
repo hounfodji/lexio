@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/(auth)/actions";
 import { InterestsEditor } from "@/components/settings/interests-editor";
 import { ThemeSelector } from "@/components/settings/theme-selector";
+import { AISettingsForm } from "@/components/settings/ai-settings-form";
+import { isProviderId, type ProviderId } from "@/lib/ai/providers";
 import { Button } from "@/components/ui/button";
 
 export default async function SettingsPage() {
@@ -11,12 +13,24 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: interests } = await supabase
-    .from("user_interests")
-    .select("interest")
-    .order("interest", { ascending: true });
+  const [{ data: interests }, { data: aiRow }] = await Promise.all([
+    supabase
+      .from("user_interests")
+      .select("interest")
+      .order("interest", { ascending: true }),
+    supabase
+      .from("user_ai_settings")
+      .select("provider, model, api_key_cipher")
+      .maybeSingle(),
+  ]);
 
   const initial = (interests ?? []).map((i) => i.interest);
+
+  // On ne renvoie jamais le cipher au client : seulement provider/model/hasKey.
+  const aiProvider: ProviderId | "" =
+    aiRow && isProviderId(aiRow.provider) ? aiRow.provider : "";
+  const aiModel = aiRow?.model ?? "";
+  const hasKey = Boolean(aiRow?.api_key_cipher);
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -30,6 +44,21 @@ export default async function SettingsPage() {
           </p>
         </div>
         <InterestsEditor initial={initial} />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="font-medium">Clé API IA</h2>
+          <p className="text-sm text-muted-foreground">
+            Branche ta propre clé (gratuite chez la plupart des fournisseurs).
+            Sans clé perso, le fournisseur par défaut du serveur est utilisé.
+          </p>
+        </div>
+        <AISettingsForm
+          initialProvider={aiProvider}
+          initialModel={aiModel}
+          hasKey={hasKey}
+        />
       </section>
 
       <section className="space-y-3">

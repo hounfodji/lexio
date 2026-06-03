@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateStory } from "@/lib/openai";
+import { generateStory } from "@/lib/ai/generate";
+import { resolveAIConfig } from "@/lib/ai/resolve";
 
 const MAX_WORDS = 6;
 
@@ -50,10 +51,11 @@ export async function POST() {
     .eq("user_id", user.id);
   const interests = (interestsRows ?? []).map((i) => i.interest);
 
-  // Génération IA (F8.3).
+  // Génération IA (F8.3) — provider résolu : clé perso ou défaut env.
   let story;
   try {
-    story = await generateStory(words, interests);
+    const ai = await resolveAIConfig(supabase, user.id);
+    story = await generateStory(ai, words, interests);
   } catch {
     return NextResponse.json(
       { error: "La génération de l'histoire a échoué. Réessaie." },

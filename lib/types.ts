@@ -59,6 +59,14 @@ export type StoryHistory = {
   created_at: string;
 }
 
+export type UserAiSettings = {
+  user_id: string;
+  provider: string;
+  api_key_cipher: string | null;
+  model: string | null;
+  updated_at: string;
+}
+
 // Type pour le générique du client Supabase. La forme (Row/Insert/Update/
 // Relationships) doit respecter `GenericSchema` de supabase-js, sinon les
 // inserts sont inférés en `never`.
@@ -99,6 +107,13 @@ export type Database = {
         Insert: Pick<StoryHistory, "user_id" | "title" | "content"> &
           Partial<StoryHistory>;
         Update: Partial<StoryHistory>;
+        Relationships: [];
+      };
+      user_ai_settings: {
+        Row: UserAiSettings;
+        Insert: Pick<UserAiSettings, "user_id" | "provider"> &
+          Partial<UserAiSettings>;
+        Update: Partial<UserAiSettings>;
         Relationships: [];
       };
     };

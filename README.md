@@ -36,17 +36,31 @@ pnpm dev
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé anon / publishable Supabase |
-| `OPENAI_API_KEY` | Clé OpenAI (serveur uniquement — jamais exposée au client) |
+| `AI_PROVIDER` | Fournisseur IA par défaut (`mistral`, `openai`, `gemini`, `groq`, `openrouter`, `deepseek`, `cerebras`) |
+| `AI_API_KEY` | Clé du fournisseur (serveur uniquement). À défaut, `OPENAI_API_KEY` est utilisé |
+| `AI_MODEL` | *(optionnel)* modèle ; sinon le défaut du provider |
+| `AI_KEY_SECRET` | Secret de chiffrement des clés saisies par les utilisateurs (Réglages) |
+
+### IA multi-provider
+
+Lexio utilise le SDK OpenAI avec un `baseURL` configurable : tout fournisseur **compatible
+OpenAI** fonctionne sans changer le code (voir [lib/ai/providers.ts](lib/ai/providers.ts)). La
+plupart offrent un **tier gratuit** (Mistral, Gemini, Groq, OpenRouter…). Deux niveaux de config :
+
+- **Par déploiement** : `AI_PROVIDER` + `AI_API_KEY` (+ `AI_MODEL`).
+- **Par utilisateur** : dans **Réglages → Clé API IA**, chacun colle sa clé (chiffrée au repos avec
+  `AI_KEY_SECRET`, jamais renvoyée au client). Cette clé prime sur le défaut.
 
 ## Base de données
 
-Le schéma, les politiques RLS et le trigger de création de profil sont dans
+Le schéma, les politiques RLS, le trigger de création de profil et les réglages IA sont dans
 [`supabase/migrations/`](supabase/migrations). Pour les appliquer sur ton projet :
 
 ```bash
 psql "<connection-string-postgres>" -f supabase/migrations/0001_schema.sql
 psql "<connection-string-postgres>" -f supabase/migrations/0002_rls.sql
 psql "<connection-string-postgres>" -f supabase/migrations/0003_trigger.sql
+psql "<connection-string-postgres>" -f supabase/migrations/0004_user_ai_settings.sql
 ```
 
 > La connection string se trouve dans Dashboard Supabase → **Connect**. Utilise la chaîne

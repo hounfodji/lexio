@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateWordCard } from "@/lib/openai";
+import { generateWordCard } from "@/lib/ai/generate";
+import { resolveAIConfig } from "@/lib/ai/resolve";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -43,13 +44,14 @@ export async function POST(request: Request) {
     );
   }
 
-  // Génération IA de la fiche.
+  // Génération IA de la fiche (provider résolu : clé perso ou défaut env).
   let card;
   try {
-    card = await generateWordCard(word);
+    const ai = await resolveAIConfig(supabase, user.id);
+    card = await generateWordCard(ai, word);
   } catch {
     return NextResponse.json(
-      { error: "La génération a échoué. Réessaie." },
+      { error: "La génération a échoué. Vérifie ta clé IA et réessaie." },
       { status: 502 },
     );
   }
