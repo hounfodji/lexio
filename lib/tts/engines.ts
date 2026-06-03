@@ -31,17 +31,23 @@ export function defaultVoice(engine: TtsEngine): string {
   return voicesFor(engine)[0].id;
 }
 
-// Détecte le meilleur moteur supporté : WebGPU → Kokoro (qualité max),
-// sinon WASM → Piper (compatible partout). null = aucun support (→ SpeechSynthesis).
-export function detectEngine(): TtsEngine | null {
-  if (typeof window === "undefined") return null;
-  const hasWebGPU = "gpu" in navigator;
-  const hasWasm = typeof WebAssembly !== "undefined";
-  if (hasWebGPU) return "kokoro";
-  if (hasWasm) return "piper";
-  return null;
+// Les deux moteurs tournent en WASM dans un Web Worker : disponibles dès que
+// WebAssembly est supporté. L'utilisateur choisit lequel utiliser.
+export function ttsSupported(): boolean {
+  return typeof window !== "undefined" && typeof WebAssembly !== "undefined";
+}
+
+export function availableEngines(): TtsEngine[] {
+  return ttsSupported() ? ["kokoro", "piper"] : [];
+}
+
+// Moteur par défaut proposé.
+export function defaultEngine(): TtsEngine | null {
+  return ttsSupported() ? "kokoro" : null;
 }
 
 export function engineLabel(engine: TtsEngine): string {
-  return engine === "kokoro" ? "Kokoro (WebGPU)" : "Piper (WASM)";
+  return engine === "kokoro"
+    ? "Kokoro — qualité supérieure (~80 Mo)"
+    : "Piper — plus léger, compatible partout";
 }

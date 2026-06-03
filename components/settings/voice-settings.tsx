@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { getTtsPrefs, setTtsPrefs } from "@/lib/tts/preferences";
 import {
-  detectEngine,
+  availableEngines,
+  defaultEngine,
   defaultVoice,
   engineLabel,
   voicesFor,
@@ -19,31 +20,32 @@ import { subscribe, speakHd, type TtsState } from "@/lib/tts/hd-tts";
 
 export function VoiceSettings() {
   const [mounted, setMounted] = useState(false);
+  const [engines, setEngines] = useState<TtsEngine[]>([]);
   const [engine, setEngine] = useState<TtsEngine | null>(null);
   const [hdEnabled, setHdEnabled] = useState(false);
   const [voice, setVoice] = useState("");
   const [tts, setTts] = useState<TtsState>({ phase: "idle", progress: 0 });
 
   useEffect(() => {
-    // Initialisation client-only (localStorage + détection navigateur) :
-    // impossible au rendu SSR, d'où ces setState au montage.
     /* eslint-disable react-hooks/set-state-in-effect */
-    const e = detectEngine();
+    const list = availableEngines();
     const prefs = getTtsPrefs();
-    setEngine(e);
+    const eng = (prefs.engine as TtsEngine) || defaultEngine();
+    setEngines(list);
+    setEngine(eng);
     setHdEnabled(prefs.hdEnabled);
-    setVoice(prefs.voice || (e ? defaultVoice(e) : ""));
+    setVoice(prefs.voice || (eng ? defaultVoice(eng) : ""));
     setMounted(true);
     /* eslint-enable react-hooks/set-state-in-effect */
     return subscribe(setTts);
   }, []);
 
-  function persist(next: { hdEnabled?: boolean; voice?: string }) {
-    const merged = {
+  function persist(next: Partial<{ hdEnabled: boolean; engine: TtsEngine; voice: string }>) {
+    setTtsPrefs({
       hdEnabled: next.hdEnabled ?? hdEnabled,
+      engine: next.engine ?? engine ?? "",
       voice: next.voice ?? voice,
-    };
-    setTtsPrefs(merged);
+    });
   }
 
   function toggleHd() {
@@ -51,9 +53,17 @@ export function VoiceSettings() {
       toast.message("Voix HD non supportée ici — la voix système sera utilisée.");
       return;
     }
-    const v = hdEnabled;
-    setHdEnabled(!v);
-    persist({ hdEnabled: !v });
+    setHdEnabled((v) => {
+      persist({ hdEnabled: !v });
+      return !v;
+    });
+  }
+
+  function changeEngine(e: TtsEngine) {
+    const v = defaultVoice(e);
+    setEngine(e);
+    setVoice(v);
+    persist({ engine: e, voice: v });
   }
 
   function changeVoice(v: string) {
@@ -76,6 +86,7 @@ export function VoiceSettings() {
 
   const loading = tts.phase === "loading";
   const speaking = tts.phase === "speaking";
+  const supported = engines.length > 0;
 
   return (
     <div className="space-y-4">
@@ -94,9 +105,9 @@ export function VoiceSettings() {
             <Volume2 className="size-4" /> Voix HD (neuronale, dans le navigateur)
           </span>
           <span className="block text-xs text-muted-foreground">
-            {engine
-              ? `Moteur : ${engineLabel(engine)} · téléchargée une fois, puis hors-ligne`
-              : "Non supportée sur ce navigateur — voix système utilisée"}
+            {supported
+              ? "Téléchargée une fois, puis fonctionne hors-ligne. Le texte ne quitte pas l'appareil."
+              : "Non supportée sur ce navigateur — voix système utilisée."}
           </span>
         </span>
         <span
@@ -109,9 +120,32 @@ export function VoiceSettings() {
         </span>
       </button>
 
-      {/* Choix de voix + test */}
-      {hdEnabled && engine && (
+      {hdEnabled && supported && engine && (
         <div className="space-y-3">
+          {/* Choix du moteur */}
+          <div className="space-y-2">
+            <Label>Moteur</Label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {engines.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => changeEngine(e)}
+                  aria-pressed={engine === e}
+                  className={cn(
+                    "rounded-lg border p-3 text-left text-sm transition-colors",
+                    engine === e
+                      ? "border-info bg-info-muted text-info"
+                      : "border-border hover:bg-accent",
+                  )}
+                >
+                  {engineLabel(e)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Choix de la voix */}
           <div className="space-y-2">
             <Label htmlFor="voice">Voix</Label>
             <select
@@ -128,12 +162,7 @@ export function VoiceSettings() {
             </select>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={test}
-            disabled={loading || speaking}
-          >
+          <Button type="button" variant="outline" onClick={test} disabled={loading || speaking}>
             {loading || speaking ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
@@ -147,6 +176,9 @@ export function VoiceSettings() {
           </Button>
 
           {loading && <Progress value={tts.progress} />}
+          {tts.phase === "error" && tts.error && (
+            <p className="text-sm text-destructive">{tts.error}</p>
+          )}
         </div>
       )}
     </div>

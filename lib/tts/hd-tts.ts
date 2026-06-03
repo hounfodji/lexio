@@ -80,6 +80,30 @@ function ensureWorker(): Worker {
   return worker;
 }
 
+function withTimeout<T>(
+  p: Promise<T>,
+  ms: number,
+  onTimeout: () => void,
+  label: string,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      onTimeout();
+      reject(new Error(`Délai dépassé (${label}).`));
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 // Charge le modèle si nécessaire (résout sur "ready").
 export async function loadHd(engine: TtsEngine, voice: string): Promise<void> {
   const sameVoiceOk = engine === "kokoro" || loadedVoice === voice;
@@ -87,10 +111,18 @@ export async function loadHd(engine: TtsEngine, voice: string): Promise<void> {
 
   const w = ensureWorker();
   setState({ phase: "loading", progress: 0, engine, error: undefined });
-  await new Promise<void>((resolve, reject) => {
-    pendingLoad = { resolve, reject };
-    w.postMessage({ type: "load", engine, voice });
-  });
+  await withTimeout(
+    new Promise<void>((resolve, reject) => {
+      pendingLoad = { resolve, reject };
+      w.postMessage({ type: "load", engine, voice });
+    }),
+    300_000, // 5 min max pour le téléchargement initial du modèle
+    () => {
+      pendingLoad = null;
+      setState({ phase: "error", error: "Téléchargement trop long." });
+    },
+    "téléchargement du modèle",
+  );
   loadedEngine = engine;
   loadedVoice = voice;
 }
@@ -107,10 +139,18 @@ export async function speakHd(
   setState({ phase: "speaking" });
 
   const id = ++seq;
-  const wav = await new Promise<ArrayBuffer>((resolve, reject) => {
-    pendingSpeak.set(id, { resolve, reject });
-    w.postMessage({ type: "speak", id, text, voice });
-  });
+  const wav = await withTimeout(
+    new Promise<ArrayBuffer>((resolve, reject) => {
+      pendingSpeak.set(id, { resolve, reject });
+      w.postMessage({ type: "speak", id, text, voice });
+    }),
+    60_000, // 1 min max pour générer l'audio d'un mot/phrase
+    () => {
+      pendingSpeak.delete(id);
+      setState({ phase: "error", error: "Génération trop longue." });
+    },
+    "génération audio",
+  );
 
   const url = URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
   const audio = new Audio(url);

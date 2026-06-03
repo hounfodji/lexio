@@ -36,11 +36,12 @@ function toPct(p: any): number | null {
   return null;
 }
 
-async function loadKokoro(device: "webgpu" | "wasm") {
+async function loadKokoro() {
   const { KokoroTTS } = await import("kokoro-js");
+  // WASM q8 : fiable dans un Web Worker (WebGPU+q8 peut se figer). ~80 Mo.
   kokoro = await KokoroTTS.from_pretrained(KOKORO_MODEL, {
     dtype: "q8",
-    device,
+    device: "wasm",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     progress_callback: (p: any) => {
       const pct = toPct(p);
@@ -64,10 +65,7 @@ async function loadPiper(voice: string) {
 
 async function ensureLoaded(target: TtsEngine, voice: string) {
   if (target === "kokoro") {
-    if (!kokoro) {
-      const device = "gpu" in navigator ? "webgpu" : "wasm";
-      await loadKokoro(device);
-    }
+    if (!kokoro) await loadKokoro();
   } else if (!piperSession || piperVoice !== voice) {
     await loadPiper(voice);
   }

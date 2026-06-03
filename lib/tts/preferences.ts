@@ -1,22 +1,30 @@
+import type { TtsEngine } from "@/lib/tts/engines";
+
 // Préférence TTS « Voix HD », stockée localement (par appareil) — cohérent
 // avec le modèle neuronal téléchargé/caché sur chaque appareil.
 
 export interface TtsPrefs {
   hdEnabled: boolean;
-  voice: string; // id de voix (selon le moteur détecté)
+  engine: TtsEngine | "";
+  voice: string; // id de voix (selon le moteur)
 }
 
 const KEY = "lexio.tts";
+const EMPTY: TtsPrefs = { hdEnabled: false, engine: "", voice: "" };
 
 export function getTtsPrefs(): TtsPrefs {
-  if (typeof window === "undefined") return { hdEnabled: false, voice: "" };
+  if (typeof window === "undefined") return { ...EMPTY };
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (!raw) return { hdEnabled: false, voice: "" };
-    const parsed = JSON.parse(raw) as Partial<TtsPrefs>;
-    return { hdEnabled: Boolean(parsed.hdEnabled), voice: parsed.voice ?? "" };
+    if (!raw) return { ...EMPTY };
+    const p = JSON.parse(raw) as Partial<TtsPrefs>;
+    return {
+      hdEnabled: Boolean(p.hdEnabled),
+      engine: (p.engine as TtsEngine) ?? "",
+      voice: p.voice ?? "",
+    };
   } catch {
-    return { hdEnabled: false, voice: "" };
+    return { ...EMPTY };
   }
 }
 

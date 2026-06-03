@@ -5,7 +5,7 @@ import { Loader2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getTtsPrefs } from "@/lib/tts/preferences";
-import { detectEngine, defaultVoice } from "@/lib/tts/engines";
+import { defaultEngine, defaultVoice, type TtsEngine } from "@/lib/tts/engines";
 
 // Lecture native (Web Speech API) — défaut et fallback ultime (F5.2).
 function speakNative(text: string) {
@@ -38,7 +38,7 @@ export function SpeakButton({
 
   async function handleClick() {
     const prefs = getTtsPrefs();
-    const engine = detectEngine();
+    const engine = (prefs.engine || defaultEngine()) as TtsEngine | null;
 
     // Voix HD activée et moteur supporté → tente le HD, sinon repli natif.
     if (prefs.hdEnabled && engine) {
