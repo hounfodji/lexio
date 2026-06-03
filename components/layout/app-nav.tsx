@@ -43,6 +43,7 @@ export function AppNav() {
             return (
               <Button
                 key={href}
+                nativeButton={false}
                 render={
                   <Link href={href} aria-current={active ? "page" : undefined} />
                 }
@@ -58,6 +59,7 @@ export function AppNav() {
 
         <div className="flex items-center gap-0.5">
           <Button
+            nativeButton={false}
             render={<Link href="/settings" aria-label="Réglages" />}
             variant={pathname === "/settings" ? "secondary" : "ghost"}
             size="icon"
