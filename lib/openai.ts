@@ -109,4 +109,75 @@ export async function generateWordCard(word: string): Promise<WordCard> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Génération d'histoires (feature phare — F8)
+// ---------------------------------------------------------------------------
+
+export const storySchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+});
+
+export type Story = z.infer<typeof storySchema>;
+
+const storyJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    title: { type: "string" },
+    content: { type: "string" },
+  },
+  required: ["title", "content"],
+} as const;
+
+const STORY_SYSTEM_PROMPT = `Tu es un auteur pédagogue qui écrit de courtes histoires en anglais
+pour des apprenants francophones. Contraintes :
+- Écris une histoire NATURELLE et engageante en anglais (120 à 220 mots).
+- Intègre IMPÉRATIVEMENT et de façon fluide TOUS les mots de vocabulaire fournis,
+  en gardant leur forme exacte au moins une fois.
+- Adapte le thème et le contexte aux centres d'intérêt fournis.
+- Le niveau doit rester accessible (B1-C1), l'histoire cohérente et amusante.
+- Fournis un titre court et accrocheur en anglais.
+Réponds uniquement via le format structuré demandé.`;
+
+/**
+ * Génère une histoire en anglais intégrant les mots fournis, sur le thème des
+ * centres d'intérêt. Valide la sortie (Zod) avec un retry (PRD §12).
+ */
+export async function generateStory(
+  words: string[],
+  interests: string[],
+): Promise<Story> {
+  const wordList = words.join(", ");
+  const interestList = interests.length ? interests.join(", ") : "general topics";
+
+  async function attempt(): Promise<Story> {
+    const completion = await client().chat.completions.create({
+      model: OPENAI_MODEL,
+      temperature: 0.8,
+      messages: [
+        { role: "system", content: STORY_SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Mots à intégrer : ${wordList}.\nCentres d'intérêt : ${interestList}.`,
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "story", strict: true, schema: storyJsonSchema },
+      },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error("Réponse OpenAI vide.");
+    return storySchema.parse(JSON.parse(content));
+  }
+
+  try {
+    return await attempt();
+  } catch {
+    return await attempt();
+  }
+}
+
 export type { CefrLevel };
