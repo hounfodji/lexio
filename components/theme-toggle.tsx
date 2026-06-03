@@ -13,24 +13,24 @@ export function ThemeToggle() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
-  // Avant montage, le thème résolu est inconnu côté serveur : on rend un
-  // bouton neutre stable pour éviter tout hydration mismatch.
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" aria-label="Changer de thème" disabled>
-        <Sun className="size-5" />
-      </Button>
-    );
-  }
+  const isDark = mounted && resolvedTheme === "dark";
 
-  const isDark = resolvedTheme === "dark";
-
+  // Pré-montage (serveur + 1er rendu client), on rend exactement le même
+  // markup neutre : pas de `disabled`, label/icône stables → aucun mismatch.
   return (
     <Button
       variant="ghost"
       size="icon"
-      aria-label={isDark ? "Passer en thème clair" : "Passer en thème sombre"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={
+        !mounted
+          ? "Changer de thème"
+          : isDark
+            ? "Passer en thème clair"
+            : "Passer en thème sombre"
+      }
+      onClick={
+        mounted ? () => setTheme(isDark ? "light" : "dark") : undefined
+      }
     >
       {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
     </Button>
