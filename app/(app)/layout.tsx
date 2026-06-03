@@ -29,8 +29,17 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+      >
+        Aller au contenu
+      </a>
       <AppNav />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-5xl flex-1 px-4 py-6"
+      >
         {children}
       </main>
     </div>

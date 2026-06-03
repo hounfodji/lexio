@@ -52,19 +52,37 @@ psql "<connection-string-postgres>" -f supabase/migrations/0003_trigger.sql
 > La connection string se trouve dans Dashboard Supabase → **Connect**. Utilise la chaîne
 > **Session Pooler** (compatible IPv4) si l'accès direct n'est pas joignable.
 
+## Fonctionnalités
+
+- **Auth** email/mot de passe (Supabase Auth) + création auto de profil (trigger).
+- **Onboarding** : choix des centres d'intérêt (personnalisent les histoires).
+- **Vocabulaire** : ajout d'un mot → **fiche IA** complète (déf. EN/FR, traduction, IPA,
+  exemple, synonymes, niveau CEFR), anti-doublon, page détail avec **TTS** (Web Speech API).
+- **Dashboard** : cartes stats (total, maîtrisés, en cours, dus) + **streak** + CTA réviser.
+- **Quiz** : 4 types (déf→mot, mot→déf, QCM, texte à trou) + **répétition espacée**
+  (1→3→7→14→30 j) ; suivi dans `quiz_attempts`.
+- **Histoires IA** : récit anglais personnalisé intégrant tes mots non maîtrisés et tes
+  centres d'intérêt, **mots surlignés cliquables** → fiche, historique.
+- **Dark mode**, responsive mobile, accessibilité de base.
+
 ## Structure
 
 ```
 app/
   (auth)/login, /signup       # authentification (Server Actions)
-  (app)/dashboard, /vocabulary, /review, /stories, /settings   # routes protégées
+  (app)/dashboard, /vocabulary, /vocabulary/[id], /review, /stories, /settings
   onboarding/                 # sélection des centres d'intérêt
-  api/                        # route handlers IA (à venir)
-components/  ui/ (shadcn) · layout/ · auth/ · onboarding/ · …
-lib/         supabase/{client,server,proxy}.ts · types.ts · interests.ts · …
+  api/generate-word · generate-story · quiz/submit   # route handlers (IA + SR)
+components/  ui/ (shadcn) · layout/ · auth/ · onboarding/ · vocabulary/ · quiz/ ·
+             dashboard/ · stories/ · settings/
+lib/         supabase/{client,server,proxy}.ts · types.ts · openai.ts ·
+             spaced-repetition.ts · quiz.ts · stats.ts · interests.ts
 supabase/    migrations/ · seed.sql
 proxy.ts     # refresh de session + protection des routes (Next 16)
 ```
+
+> **Note Next.js 16** : le fichier `middleware` est remplacé par `proxy.ts` ; les APIs de
+> requête (`cookies`, `params`) sont asynchrones. shadcn/ui s'appuie sur Base UI (prop `render`).
 
 ## Sécurité
 
