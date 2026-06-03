@@ -78,8 +78,11 @@ export default async function WordDetailPage({
               <dt className="text-xs font-medium text-muted-foreground">
                 Exemple
               </dt>
-              <dd className="italic text-muted-foreground">
-                “{word.example_sentence}”
+              <dd className="flex items-start gap-2">
+                <span className="italic text-muted-foreground">
+                  “{word.example_sentence}”
+                </span>
+                <SpeakButton text={word.example_sentence} variant="ghost" />
               </dd>
             </div>
           )}

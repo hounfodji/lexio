@@ -4,6 +4,7 @@ import { signOut } from "@/app/(auth)/actions";
 import { InterestsEditor } from "@/components/settings/interests-editor";
 import { ThemeSelector } from "@/components/settings/theme-selector";
 import { AISettingsForm } from "@/components/settings/ai-settings-form";
+import { VoiceSettings } from "@/components/settings/voice-settings";
 import { isProviderId, type ProviderId } from "@/lib/ai/providers";
 import { Button } from "@/components/ui/button";
 
@@ -59,6 +60,17 @@ export default async function SettingsPage() {
           initialModel={aiModel}
           hasKey={hasKey}
         />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="font-medium">Voix</h2>
+          <p className="text-sm text-muted-foreground">
+            Active une voix neuronale haute qualité, exécutée dans ton
+            navigateur (gratuite, sans serveur).
+          </p>
+        </div>
+        <VoiceSettings />
       </section>
 
       <section className="space-y-3">
