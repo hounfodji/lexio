@@ -16,11 +16,9 @@ export const KOKORO_VOICES: TtsVoice[] = [
   { id: "bm_george", label: "George — UK, masculine" },
 ];
 
+// Piper utilise un singleton (TtsSession) : une seule voix par session.
 export const PIPER_VOICES: TtsVoice[] = [
   { id: "en_US-hfc_female-medium", label: "HFC — US, féminine" },
-  { id: "en_US-hfc_male-medium", label: "HFC — US, masculine" },
-  { id: "en_GB-cori-high", label: "Cori — UK, féminine" },
-  { id: "en_GB-alan-medium", label: "Alan — UK, masculine" },
 ];
 
 export function voicesFor(engine: TtsEngine): TtsVoice[] {

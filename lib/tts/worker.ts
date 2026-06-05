@@ -16,8 +16,7 @@ let engine: TtsEngine | null = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let kokoro: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let piper: any = null;
-let piperVoice = ""; // dernière voix préchargée (OPFS)
+let piperSession: any = null;
 
 function postProgress(value: number) {
   ctx.postMessage({ type: "progress", value: Math.max(0, Math.min(100, value)) });
@@ -50,25 +49,25 @@ async function loadKokoro() {
   });
 }
 
-// Piper : on N'UTILISE PAS TtsSession (singleton qui fige la 1re voix). On
-// précharge le modèle de la voix demandée (download → OPFS) ; la génération
-// passe par predict({ text, voiceId }), stateless, qui respecte la voix.
+// Piper : TtsSession est un singleton (une seule voix par session) — c'est le
+// comportement accepté ici. Il charge son backend ort tout seul.
 async function loadPiper(voice: string) {
-  if (!piper) piper = await import("@mintplex-labs/piper-tts-web");
-  if (piperVoice !== voice) {
+  if (piperSession) return;
+  const piper = await import("@mintplex-labs/piper-tts-web");
+  piperSession = await piper.TtsSession.create({
+    voiceId: voice as never,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await piper.download(voice, (p: any) => {
+    progress: (p: any) => {
       const pct = toPct(p);
       if (pct !== null) postProgress(pct);
-    });
-    piperVoice = voice;
-  }
+    },
+  });
 }
 
 async function ensureLoaded(target: TtsEngine, voice: string) {
   if (target === "kokoro") {
     if (!kokoro) await loadKokoro();
-  } else {
+  } else if (!piperSession) {
     await loadPiper(voice);
   }
   engine = target;
@@ -80,9 +79,9 @@ async function speak(text: string, voice: string): Promise<ArrayBuffer> {
     const blob: Blob = await audio.toBlob();
     return blob.arrayBuffer();
   }
-  // Piper : génération stateless avec la voix courante.
+  // Piper : une seule voix (singleton).
   await loadPiper(voice);
-  const blob: Blob = await piper.predict({ text, voiceId: voice });
+  const blob: Blob = await piperSession.predict(text);
   return blob.arrayBuffer();
 }
 
