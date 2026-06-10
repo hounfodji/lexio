@@ -1,6 +1,7 @@
 "use client";
 
 import type { TtsEngine } from "@/lib/tts/engines";
+import { markModelCached } from "@/lib/tts/preferences";
 
 export type TtsPhase = "idle" | "loading" | "ready" | "speaking" | "error";
 
@@ -125,6 +126,7 @@ export async function loadHd(engine: TtsEngine, voice: string): Promise<void> {
   );
   loadedEngine = engine;
   loadedVoice = voice;
+  markModelCached(engine);
 }
 
 // Génère puis joue l'audio HD. Lève en cas d'échec (le bouton fait alors le

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { getTtsPrefs, setTtsPrefs } from "@/lib/tts/preferences";
+import { getTtsPrefs, isModelCached, setTtsPrefs } from "@/lib/tts/preferences";
 import {
   availableEngines,
   defaultEngine,
@@ -96,6 +96,10 @@ export function VoiceSettings() {
   const loading = tts.phase === "loading";
   const speaking = tts.phase === "speaking";
   const supported = engines.length > 0;
+  // Si le moteur a déjà été chargé une fois, on est en init depuis le cache,
+  // pas en vrai téléchargement → wording adapté.
+  const cached = engine ? isModelCached(engine) : false;
+  const loadingLabel = cached ? "Initialisation" : "Téléchargement";
 
   return (
     <div className="space-y-4">
@@ -178,7 +182,7 @@ export function VoiceSettings() {
               <Volume2 className="size-4" />
             )}
             {loading
-              ? `Téléchargement… ${Math.round(tts.progress)}%`
+              ? `${loadingLabel}… ${Math.round(tts.progress)}%`
               : speaking
                 ? "Lecture…"
                 : "Tester la voix"}

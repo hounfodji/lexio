@@ -36,3 +36,36 @@ export function setTtsPrefs(prefs: TtsPrefs): void {
     // localStorage indisponible (mode privé strict) — on ignore.
   }
 }
+
+// Marqueur "modèle déjà téléchargé une fois" — sert juste à distinguer dans
+// l'UI un vrai téléchargement (~80 Mo) d'une init depuis le cache navigateur
+// (Cache API pour Kokoro/transformers.js, IndexedDB pour Piper). Pas de garantie
+// stricte : si le navigateur évince le cache, on re-téléchargera réellement.
+const CACHE_KEY = "lexio.tts.cached";
+
+export function isModelCached(engine: TtsEngine): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    if (!raw) return false;
+    const list = JSON.parse(raw) as unknown;
+    return Array.isArray(list) && list.includes(engine);
+  } catch {
+    return false;
+  }
+}
+
+export function markModelCached(engine: TtsEngine): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    const list = raw ? (JSON.parse(raw) as unknown) : [];
+    const arr = Array.isArray(list) ? (list as string[]) : [];
+    if (!arr.includes(engine)) {
+      arr.push(engine);
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify(arr));
+    }
+  } catch {
+    // ignore
+  }
+}
