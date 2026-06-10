@@ -29,6 +29,10 @@ export function defaultVoice(engine: TtsEngine): string {
   return voicesFor(engine)[0].id;
 }
 
+export function isValidVoice(engine: TtsEngine, voiceId: string): boolean {
+  return voicesFor(engine).some((v) => v.id === voiceId);
+}
+
 // Les deux moteurs tournent en WASM dans un Web Worker : disponibles dès que
 // WebAssembly est supporté. L'utilisateur choisit lequel utiliser.
 export function ttsSupported(): boolean {

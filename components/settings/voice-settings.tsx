@@ -13,6 +13,7 @@ import {
   defaultEngine,
   defaultVoice,
   engineLabel,
+  isValidVoice,
   voicesFor,
   type TtsEngine,
 } from "@/lib/tts/engines";
@@ -31,10 +32,17 @@ export function VoiceSettings() {
     const list = availableEngines();
     const prefs = getTtsPrefs();
     const eng = (prefs.engine as TtsEngine) || defaultEngine();
+    // Voix invalide pour le moteur (ex. ancien ID Piper alors que moteur=Kokoro)
+    // → on retombe sur la voix par défaut et on purge le localStorage.
+    let v = prefs.voice;
+    if (eng && (!v || !isValidVoice(eng, v))) {
+      v = defaultVoice(eng);
+      setTtsPrefs({ hdEnabled: prefs.hdEnabled, engine: eng, voice: v });
+    }
     setEngines(list);
     setEngine(eng);
     setHdEnabled(prefs.hdEnabled);
-    setVoice(prefs.voice || (eng ? defaultVoice(eng) : ""));
+    setVoice(v);
     setMounted(true);
     /* eslint-enable react-hooks/set-state-in-effect */
     return subscribe(setTts);
@@ -75,7 +83,8 @@ export function VoiceSettings() {
     if (!engine) return;
     try {
       await speakHd(engine, "Hello, this is the HD voice.", voice);
-    } catch {
+    } catch (err) {
+      console.error("[Lexio TTS]", { engine, voice, error: err });
       toast.error("Échec de la voix HD. Réessaie ou garde la voix standard.");
     }
   }

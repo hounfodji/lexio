@@ -4,8 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { getTtsPrefs } from "@/lib/tts/preferences";
-import { defaultEngine, defaultVoice, type TtsEngine } from "@/lib/tts/engines";
+import { getTtsPrefs, setTtsPrefs } from "@/lib/tts/preferences";
+import {
+  defaultEngine,
+  defaultVoice,
+  isValidVoice,
+  type TtsEngine,
+} from "@/lib/tts/engines";
 
 // Lecture native (Web Speech API) — défaut et fallback ultime (F5.2).
 function speakNative(text: string) {
@@ -42,11 +47,20 @@ export function SpeakButton({
 
     // Voix HD activée et moteur supporté → tente le HD, sinon repli natif.
     if (prefs.hdEnabled && engine) {
+      // Voix invalide pour le moteur courant (ex. ID Piper laissé après un
+      // changement de moteur) → on remet la voix par défaut et on purge prefs.
+      let voice = prefs.voice;
+      if (!voice || !isValidVoice(engine, voice)) {
+        voice = defaultVoice(engine);
+        setTtsPrefs({ ...prefs, engine, voice });
+      }
+
       setBusy(true);
       try {
         const { speakHd } = await import("@/lib/tts/hd-tts");
-        await speakHd(engine, text, prefs.voice || defaultVoice(engine));
-      } catch {
+        await speakHd(engine, text, voice);
+      } catch (err) {
+        console.error("[Lexio TTS]", { engine, voice, error: err });
         toast.message("Voix HD indisponible — lecture standard.");
         speakNative(text);
       } finally {
