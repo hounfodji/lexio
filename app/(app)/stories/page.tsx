@@ -2,6 +2,7 @@ import { MousePointerClick } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { GenerateStoryButton } from "@/components/stories/generate-story-button";
 import { StoryContent } from "@/components/stories/story-content";
+import { SpeakButton } from "@/components/vocabulary/speak-button";
 import type { StoryHistory, Vocabulary } from "@/lib/types";
 
 const dateFmt = new Intl.DateTimeFormat("fr-FR", {
@@ -59,17 +60,24 @@ export default async function StoriesPage() {
       <div className="space-y-4">
         {list.map((story) => (
           <article key={story.id} className="rounded-xl border bg-card p-6">
-            <header className="mb-3">
-              <h2 className="text-lg font-semibold">{story.title}</h2>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>{dateFmt.format(new Date(story.created_at))}</span>
-                {story.interests_used.length > 0 && (
-                  <>
-                    <span aria-hidden>·</span>
-                    <span>Thème : {story.interests_used.join(", ")}</span>
-                  </>
-                )}
+            <header className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <h2 className="text-lg font-semibold">{story.title}</h2>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>{dateFmt.format(new Date(story.created_at))}</span>
+                  {story.interests_used.length > 0 && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span>Thème : {story.interests_used.join(", ")}</span>
+                    </>
+                  )}
+                </div>
               </div>
+              <SpeakButton
+                text={story.content}
+                variant="ghost"
+                ariaLabel={`Écouter l'histoire : ${story.title}`}
+              />
             </header>
 
             <div className="text-sm text-foreground/90">

@@ -28,9 +28,11 @@ function speakNative(text: string) {
 export function SpeakButton({
   text,
   variant = "outline",
+  ariaLabel,
 }: {
   text: string;
   variant?: "outline" | "ghost";
+  ariaLabel?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const mounted = useRef(true);
@@ -79,7 +81,7 @@ export function SpeakButton({
       size="icon"
       onClick={handleClick}
       disabled={busy}
-      aria-label={`Écouter : ${text}`}
+      aria-label={ariaLabel ?? `Écouter : ${text}`}
     >
       {busy ? (
         <Loader2 className="size-5 animate-spin" />
