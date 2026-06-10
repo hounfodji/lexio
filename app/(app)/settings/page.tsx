@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/(auth)/actions";
 import { InterestsEditor } from "@/components/settings/interests-editor";
+import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeSelector } from "@/components/settings/theme-selector";
 import { AISettingsForm } from "@/components/settings/ai-settings-form";
 import { VoiceSettings } from "@/components/settings/voice-settings";
@@ -14,7 +15,7 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: interests }, { data: aiRow }] = await Promise.all([
+  const [{ data: interests }, { data: aiRow }, { data: profile }] = await Promise.all([
     supabase
       .from("user_interests")
       .select("interest")
@@ -22,6 +23,11 @@ export default async function SettingsPage() {
     supabase
       .from("user_ai_settings")
       .select("provider, model, api_key_cipher")
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user?.id ?? "")
       .maybeSingle(),
   ]);
 
@@ -32,10 +38,22 @@ export default async function SettingsPage() {
     aiRow && isProviderId(aiRow.provider) ? aiRow.provider : "";
   const aiModel = aiRow?.model ?? "";
   const hasKey = Boolean(aiRow?.api_key_cipher);
+  const initialUsername =
+    profile?.username || user?.email?.split("@")[0] || "";
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <h1 className="text-2xl font-semibold tracking-tight">Réglages</h1>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="font-medium">Profil</h2>
+          <p className="text-sm text-muted-foreground">
+            Ton nom d&apos;affichage et ton mot de passe.
+          </p>
+        </div>
+        <ProfileForm initialUsername={initialUsername} />
+      </section>
 
       <section className="space-y-3">
         <div>

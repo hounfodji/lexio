@@ -3,7 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/types";
 
 // Routes accessibles sans authentification.
-const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/auth",
+];
 
 // Rafraîchit la session Supabase et protège les routes.
 // Exécuté par le proxy (ex-middleware) sur chaque requête éligible.

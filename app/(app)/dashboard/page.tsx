@@ -11,11 +11,17 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const stats = user
-    ? await getDashboardStats(supabase, user.id)
-    : { total: 0, mastered: 0, learning: 0, dueToday: 0, streak: 0 };
+  const [stats, profileRes] = await Promise.all([
+    user
+      ? getDashboardStats(supabase, user.id)
+      : Promise.resolve({ total: 0, mastered: 0, learning: 0, dueToday: 0, streak: 0 }),
+    user
+      ? supabase.from("profiles").select("username").eq("id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
-  const name = user?.email?.split("@")[0] ?? "toi";
+  const name =
+    profileRes.data?.username || user?.email?.split("@")[0] || "toi";
 
   return (
     <div className="space-y-6">

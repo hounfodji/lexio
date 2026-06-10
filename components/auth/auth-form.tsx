@@ -62,6 +62,16 @@ export function AuthForm({ mode, action }: AuthFormProps) {
               placeholder="••••••••"
               required
             />
+            {isLogin && (
+              <p className="text-right text-xs">
+                <Link
+                  href="/forgot-password"
+                  className="text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </p>
+            )}
           </div>
           {state.error && (
             <p role="alert" className="text-sm text-destructive">
