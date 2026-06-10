@@ -6,6 +6,7 @@ import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeSelector } from "@/components/settings/theme-selector";
 import { AISettingsForm } from "@/components/settings/ai-settings-form";
 import { VoiceSettings } from "@/components/settings/voice-settings";
+import { isHdVoiceEnabled } from "@/lib/tts/feature-flag";
 import { isProviderId, type ProviderId } from "@/lib/ai/providers";
 import { Button } from "@/components/ui/button";
 
@@ -80,16 +81,18 @@ export default async function SettingsPage() {
         />
       </section>
 
-      <section className="space-y-3">
-        <div>
-          <h2 className="font-medium">Voix</h2>
-          <p className="text-sm text-muted-foreground">
-            Active une voix neuronale haute qualité, exécutée dans ton
-            navigateur (gratuite, sans serveur).
-          </p>
-        </div>
-        <VoiceSettings />
-      </section>
+      {isHdVoiceEnabled() && (
+        <section className="space-y-3">
+          <div>
+            <h2 className="font-medium">Voix</h2>
+            <p className="text-sm text-muted-foreground">
+              Active une voix neuronale haute qualité, exécutée dans ton
+              navigateur (gratuite, sans serveur).
+            </p>
+          </div>
+          <VoiceSettings />
+        </section>
+      )}
 
       <section className="space-y-3">
         <div>

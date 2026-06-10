@@ -18,8 +18,14 @@ import {
   type TtsEngine,
 } from "@/lib/tts/engines";
 import { subscribe, speakHd, type TtsState } from "@/lib/tts/hd-tts";
+import { isHdVoiceEnabled } from "@/lib/tts/feature-flag";
 
 export function VoiceSettings() {
+  if (!isHdVoiceEnabled()) return null;
+  return <VoiceSettingsInner />;
+}
+
+function VoiceSettingsInner() {
   const [mounted, setMounted] = useState(false);
   const [engines, setEngines] = useState<TtsEngine[]>([]);
   const [engine, setEngine] = useState<TtsEngine | null>(null);

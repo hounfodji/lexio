@@ -11,6 +11,7 @@ import {
   isValidVoice,
   type TtsEngine,
 } from "@/lib/tts/engines";
+import { isHdVoiceEnabled } from "@/lib/tts/feature-flag";
 
 // Lecture native (Web Speech API) — défaut et fallback ultime (F5.2).
 function speakNative(text: string) {
@@ -44,6 +45,13 @@ export function SpeakButton({
   }, []);
 
   async function handleClick() {
+    // HD coupée (prod) → on prend toujours la voix native, même si l'utilisateur
+    // avait activé HD côté localStorage avant la désactivation.
+    if (!isHdVoiceEnabled()) {
+      speakNative(text);
+      return;
+    }
+
     const prefs = getTtsPrefs();
     const engine = (prefs.engine || defaultEngine()) as TtsEngine | null;
 
